@@ -7,6 +7,8 @@ This video explains how it works!
 
 [![Watch the video](https://i.imgur.com/v369AtP.png)](https://www.youtube.com/watch?v=ciNcxi2bPwM)
 
+**[January 2023]** - Updated to use the [BarRaider/obs-websocket-dotnet](https://www.nuget.org/packages/obs-websocket-dotnet/5.0.0.3?_src=template) nuget package as was having trouble connecting to OBS 30.x which does not appear to support connections to localhost/loopback address and to default to port 4455. Added ability to enter websocket password and change port number from the default.
+
 ## Usage
 * Set a scene for a slide with 
 ```<language>
