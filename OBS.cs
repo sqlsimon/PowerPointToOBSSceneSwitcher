@@ -1,7 +1,10 @@
-﻿using OBS.WebSocket.NET;
+﻿using OBSWebsocketDotNet;
+using OBSWebsocketDotNet.Types;
+using OBSWebsocketDotNet.Types.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace PowerPointToOBSSceneSwitcher
@@ -10,17 +13,47 @@ namespace PowerPointToOBSSceneSwitcher
 	public class ObsLocal : IDisposable
 	{
 		private bool _DisposedValue;
-		private ObsWebSocket _OBS;
+		private OBSWebsocket _OBS;
 		private List<string> validScenes;
 		private string defaultScene;
 
 		public ObsLocal() { }
 
-		public Task Connect()
+		public Task Connect(string Password,string PortNumber)
 		{
-			_OBS = new ObsWebSocket();
-			_OBS.Connect($"ws://127.0.0.1:4444", "");
-			return Task.CompletedTask;
+
+			_OBS = new OBSWebsocket();
+			string _IPV4Address = GetIPV4Addess();
+			System.Console.WriteLine("IPV4 Address: {0}", _IPV4Address);
+			string _wsConnectionString = "ws://" + _IPV4Address + ":" + PortNumber;
+			System.Console.WriteLine("Connecting to OBS WebSocket Address: {0}", _wsConnectionString);
+
+            try
+            {
+                _OBS.ConnectAsync(_wsConnectionString, Password);
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine("Connection to OBS failed: {0}", ex.Message.ToString());
+
+            }
+
+            System.Console.Write("Conecting...");
+            while (!_OBS.IsConnected)
+            {
+				System.Threading.Thread.Sleep(5000);
+                System.Console.Write(".");
+            }
+
+            return Task.CompletedTask;
+		}
+
+		private string GetIPV4Addess()
+		{
+            var networkAddressLIst = Dns.GetHostEntry(Dns.GetHostName());
+            string IPV4Adress = networkAddressLIst.AddressList[1].ToString();
+
+            return IPV4Adress;
 		}
 
 		public string DefaultScene
@@ -53,33 +86,33 @@ namespace PowerPointToOBSSceneSwitcher
 				scene = defaultScene;
 			}
 
-			_OBS.Api.SetCurrentScene(scene);
-
+			//_OBS.Api.SetCurrentScene(scene);
+			_OBS.SetCurrentProgramScene(scene);
 			return true;
         }
 
 		public void GetScenes()
         {
-			var allScene = _OBS.Api.GetSceneList();
-			var list = allScene.Scenes.Select(s => s.Name).ToList();
+			var allScene = _OBS.ListScenes();
+			var list = allScene.Select(s => s.Name).ToList();
             Console.WriteLine("Valid Scenes:");
-			foreach(var l in list)
-            {
-                Console.WriteLine(l);
-            }
+			foreach (var l in list)
+			{
+				Console.WriteLine(l);
+			}
 			validScenes = list;
-        }
+		}
 
 		public bool StartRecording()
 		{
-			try { _OBS.Api.StartRecording(); }
+			try { _OBS.StartRecord(); }
 			catch {  /* Recording already started */ }
 			return true;
 		}
 
 		public bool StopRecording()
 		{
-			try { _OBS.Api.StopRecording(); }
+			try { _OBS.StopRecord(); }
 			catch {  /* Recording already stopped */ }
 			return true;
 		}

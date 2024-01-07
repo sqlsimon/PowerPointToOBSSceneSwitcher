@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.PowerPoint;
+using PanoramicData.ConsoleExtensions;
 //Thanks to CSharpFritz and EngstromJimmy for their gists, snippets, and thoughts.
 
 namespace PowerPointToOBSSceneSwitcher
@@ -12,18 +13,38 @@ namespace PowerPointToOBSSceneSwitcher
         private static ObsLocal OBS;
         static async Task Main(string[] args)
         {
-            Console.Write("Connecting to PowerPoint...");
-            ppt.SlideShowNextSlide += App_SlideShowNextSlide;
-            Console.WriteLine("connected");
+            Console.Write("Enter OBS Websocket password (Press <ENTER> for no password): ");
+            string _Password = ConsolePlus.ReadPassword();
+            Console.WriteLine("");
+            Console.Write("Enter OBS Websocket port number (Press <ENTER> for default [4455]): ");
+            string _PortNumber = Console.ReadLine();
+            _PortNumber = _PortNumber == "" ? "4455" : _PortNumber;
 
-            Console.Write("Connecting to OBS...");
-            OBS = new ObsLocal();
-            await OBS.Connect();
-            Console.WriteLine("connected");
+            var isNumeric = int.TryParse(_PortNumber, out _);
 
-            OBS.GetScenes();
+            if (isNumeric)
+            {
+                
 
-            Console.ReadLine();
+                Console.Write("Connecting to PowerPoint...");
+                ppt.SlideShowNextSlide += App_SlideShowNextSlide;
+                Console.WriteLine("connected");
+
+                Console.WriteLine("Connecting to OBS...");
+                OBS = new ObsLocal();
+                await OBS.Connect(_Password, _PortNumber);
+                Console.WriteLine("Connected");
+
+                OBS.GetScenes();
+
+                Console.WriteLine("Press any key to exit");
+                Console.ReadLine();
+            }
+            else
+            {
+                Console.WriteLine("ERROR: Portnumber must be numeric");
+
+            }    
         }
 
 
